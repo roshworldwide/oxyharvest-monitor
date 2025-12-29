@@ -129,6 +129,7 @@ page = st.sidebar.radio("Navigate:", ["📊 Dashboard", "⚙️ Admin Settings"]
 # --- 5. INITIALIZATION ---
 if 'static_co2' not in st.session_state: st.session_state['static_co2'] = "*"
 if 'static_trees' not in st.session_state: st.session_state['static_trees'] = "*"
+if 'static_biomass' not in st.session_state: st.session_state['static_biomass'] = "*" # New Field
 if 'client_name' not in st.session_state: st.session_state['client_name'] = "Genpact"
 if 'client_loc' not in st.session_state: st.session_state['client_loc'] = "Phase - V, Gurgaon"
 if 'history_data' not in st.session_state: st.session_state['history_data'] = pd.DataFrame(columns=['created_at', 'co2'])
@@ -144,10 +145,14 @@ if page == "⚙️ Admin Settings":
         c1, c2 = st.columns(2)
         with c1: new_client = st.text_input("Client Name", value=st.session_state['client_name'])
         with c2: new_loc = st.text_input("Location", value=st.session_state['client_loc'])
+        
         st.subheader("Impact Data")
-        c3, c4 = st.columns(2)
-        with c3: new_co2 = st.text_input("Cumulative CO2", value=st.session_state['static_co2'])
+        # Layout changed to 3 columns for the Admin panel too
+        c3, c4, c5 = st.columns(3)
+        with c3: new_co2 = st.text_input("Cumulative CO2 (kg)", value=st.session_state['static_co2'])
         with c4: new_trees = st.text_input("Tree Equivalence", value=st.session_state['static_trees'])
+        with c5: new_biomass = st.text_input("Biomass (Last Month)", value=st.session_state['static_biomass'])
+        
         st.markdown("---")
         sim_offline = st.checkbox("⚠️ Simulate Device Offline Mode", value=st.session_state['force_offline'])
         if st.form_submit_button("Update Dashboard"):
@@ -155,6 +160,7 @@ if page == "⚙️ Admin Settings":
             st.session_state['client_loc'] = new_loc
             st.session_state['static_co2'] = new_co2
             st.session_state['static_trees'] = new_trees
+            st.session_state['static_biomass'] = new_biomass
             st.session_state['force_offline'] = sim_offline
             st.success("Saved!")
 
@@ -211,7 +217,7 @@ elif page == "📊 Dashboard":
     
     with c_logo:
         try: 
-            # INCREASED LOGO SIZE TO 280
+            # LOGO SIZE 280
             st.image(LOGO_URL, width=280)
         except: st.error("Logo missing")
     
@@ -239,7 +245,6 @@ elif page == "📊 Dashboard":
     # --- METRICS ---
     if not new_df.empty:
         c1, c2, c3, c4 = st.columns(4)
-        # AQI Metric Label updates to "Status: Offline" if needed
         with c1: st.metric("AQI Index", f"{curr.get('AQI',0)}", f"Status: {status_label}", delta_color="off")
         with c2: st.metric("PM 2.5", f"{curr.get('pm2_5',0)}")
         with c3: st.metric("PM 10", f"{curr.get('pm10',0)}")
@@ -247,13 +252,28 @@ elif page == "📊 Dashboard":
     else:
         st.warning("Waiting for data stream...")
 
-    # --- IMPACT PLACEHOLDERS ---
+    # --- IMPACT PLACEHOLDERS (NOW 3 COLUMNS) ---
     st.markdown("<br>", unsafe_allow_html=True)
-    i1, i2 = st.columns(2)
+    i1, i2, i3 = st.columns(3)
+    
     with i1:
-        st.markdown(f"""<div class="css-1r6slb0" style="border-left: 5px solid #28a745;"><div style="font-size: 12px; color: #888; font-weight: bold;">CUMULATIVE CO2 ABSORBED</div><div style="font-size: 36px; font-weight: 800; color: #28a745;">{st.session_state['static_co2']}</div></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="css-1r6slb0" style="border-left: 5px solid #28a745;">
+            <div style="font-size: 12px; color: #888; font-weight: bold;">CUMULATIVE CO2 ABSORBED</div>
+            <div style="font-size: 36px; font-weight: 800; color: #28a745;">{st.session_state['static_co2']}</div>
+        </div>""", unsafe_allow_html=True)
+        
     with i2:
-        st.markdown(f"""<div class="css-1r6slb0" style="border-left: 5px solid #28a745;"><div style="font-size: 12px; color: #888; font-weight: bold;">TREE EQUIVALENCE</div><div style="font-size: 36px; font-weight: 800; color: #28a745;">{st.session_state['static_trees']}</div></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="css-1r6slb0" style="border-left: 5px solid #28a745;">
+            <div style="font-size: 12px; color: #888; font-weight: bold;">TREE EQUIVALENCE</div>
+            <div style="font-size: 36px; font-weight: 800; color: #28a745;">{st.session_state['static_trees']}</div>
+        </div>""", unsafe_allow_html=True)
+
+    with i3:
+        # NEW BIOMASS BOX
+        st.markdown(f"""<div class="css-1r6slb0" style="border-left: 5px solid #28a745;">
+            <div style="font-size: 12px; color: #888; font-weight: bold;">BIOMASS GENERATED (LAST MONTH)</div>
+            <div style="font-size: 36px; font-weight: 800; color: #28a745;">{st.session_state['static_biomass']} gm</div>
+        </div>""", unsafe_allow_html=True)
 
     # --- CHARTS & TELEMETRY ---
     st.markdown("<br>", unsafe_allow_html=True)
